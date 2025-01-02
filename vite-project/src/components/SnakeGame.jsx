@@ -21,6 +21,7 @@ function SnakeGame() {
   );
   const [touchStart, setTouchStart] = useState(null);
   const [showTouchControls, setShowTouchControls] = useState(false);
+  const [isGameStarted, setIsGameStarted] = useState(false);
 
   useEffect(() => {
     if (isGameOver && score > highScore) {
@@ -51,7 +52,7 @@ function SnakeGame() {
   };
 
   const moveSnake = useCallback(() => {
-    if (isGameOver || isPaused) return;
+    if (isGameOver || isPaused || !isGameStarted) return;
 
     setSnake((currentSnake) => {
       const head = currentSnake[0];
@@ -105,7 +106,7 @@ function SnakeGame() {
 
       return newSnake;
     });
-  }, [direction, food, generateFood, isGameOver, isPaused]);
+  }, [direction, food, generateFood, isGameOver, isPaused, isGameStarted]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -211,6 +212,11 @@ function SnakeGame() {
     }
   };
 
+  const startGame = () => {
+    setIsGameStarted(true);
+    resetGame();
+  };
+
   return (
     <div
       className="snake-game"
@@ -227,97 +233,115 @@ function SnakeGame() {
             <h3>High Score: {highScore}</h3>
           </div>
         </div>
-        <div className="game-controls">
-          <button onClick={togglePause} className="control-btn">
-            {isPaused ? "Resume" : "Pause"}
-          </button>
-          <button onClick={resetGame} className="control-btn">
-            New Game
-          </button>
-        </div>
+
+        {!isGameStarted ? (
+          <div className="start-screen">
+            <h2>Welcome to Snake Game!</h2>
+            <button onClick={startGame} className="start-btn">
+              Play Game
+            </button>
+          </div>
+        ) : (
+          <div className="game-controls">
+            <button onClick={togglePause} className="control-btn">
+              {isPaused ? "Resume" : "Pause"}
+            </button>
+            <button onClick={resetGame} className="control-btn">
+              New Game
+            </button>
+          </div>
+        )}
+
         {isGameOver && (
           <div className="game-over">
             <h2>Game Over!</h2>
             {score > highScore && (
               <h3 className="new-high-score">New High Score! 🎉</h3>
             )}
+            <button onClick={startGame} className="start-btn">
+              Play Again
+            </button>
           </div>
         )}
-        {isPaused && !isGameOver && (
+
+        {isPaused && !isGameOver && isGameStarted && (
           <div className="paused-overlay">
             <h2>Game Paused</h2>
             <p>Press Space or click Resume to continue</p>
           </div>
         )}
       </div>
-      <div className="game-container">
-        <div
-          className="game-board"
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${GRID_SIZE}, ${CELL_SIZE}px)`,
-            gap: "1px",
-            backgroundColor: "#2a2a2a",
-            padding: "10px",
-            borderRadius: "10px",
-            boxShadow: "0 0 20px rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
-            const x = index % GRID_SIZE;
-            const y = Math.floor(index / GRID_SIZE);
-            const isSnake = snake.some(
-              (segment) => segment.x === x && segment.y === y
-            );
-            const isFood = food.x === x && food.y === y;
-            const isHead = isSnake && x === snake[0].x && y === snake[0].y;
 
-            return (
-              <div
-                key={index}
-                className={`game-cell ${isHead ? "snake-head" : ""} ${
-                  isSnake ? "snake-body" : ""
-                } ${isFood ? "food" : ""}`}
-                style={{
-                  width: CELL_SIZE,
-                  height: CELL_SIZE,
-                }}
-              />
-            );
-          })}
-        </div>
+      {isGameStarted && (
+        <div className="game-container">
+          <div
+            className="game-board"
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${GRID_SIZE}, ${CELL_SIZE}px)`,
+              gap: "1px",
+              backgroundColor: "#2a2a2a",
+              padding: "10px",
+              borderRadius: "10px",
+              boxShadow: "0 0 20px rgba(0, 0, 0, 0.3)",
+            }}
+          >
+            {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
+              const x = index % GRID_SIZE;
+              const y = Math.floor(index / GRID_SIZE);
+              const isSnake = snake.some(
+                (segment) => segment.x === x && segment.y === y
+              );
+              const isFood = food.x === x && food.y === y;
+              const isHead = isSnake && x === snake[0].x && y === snake[0].y;
 
-        {showTouchControls && (
-          <div className="touch-controls">
-            <button
-              className="direction-btn up"
-              onClick={() => handleDirectionButton("UP")}
-            >
-              ↑
-            </button>
-            <div className="horizontal-controls">
+              return (
+                <div
+                  key={index}
+                  className={`game-cell ${isHead ? "snake-head" : ""} ${
+                    isSnake ? "snake-body" : ""
+                  } ${isFood ? "food" : ""}`}
+                  style={{
+                    width: CELL_SIZE,
+                    height: CELL_SIZE,
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {showTouchControls && (
+            <div className="touch-controls">
               <button
-                className="direction-btn left"
-                onClick={() => handleDirectionButton("LEFT")}
+                className="direction-btn up"
+                onClick={() => handleDirectionButton("UP")}
               >
-                ←
+                ↑
               </button>
+              <div className="horizontal-controls">
+                <button
+                  className="direction-btn left"
+                  onClick={() => handleDirectionButton("LEFT")}
+                >
+                  ←
+                </button>
+                <button
+                  className="direction-btn right"
+                  onClick={() => handleDirectionButton("RIGHT")}
+                >
+                  →
+                </button>
+              </div>
               <button
-                className="direction-btn right"
-                onClick={() => handleDirectionButton("RIGHT")}
+                className="direction-btn down"
+                onClick={() => handleDirectionButton("DOWN")}
               >
-                →
+                ↓
               </button>
             </div>
-            <button
-              className="direction-btn down"
-              onClick={() => handleDirectionButton("DOWN")}
-            >
-              ↓
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
